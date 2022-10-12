@@ -1,0 +1,40 @@
+{
+  "name": "employee-api",
+  "version": "1.0.0",
+  "description": "Employee API",
+  "main": "dist/index.js",
+  "scripts": {
+    "clean": "rimraf dist/*",
+    "lint": "tslint -c tslint.json -p tsconfig.json --fix",
+    "tsc": "tsc",
+    "build": "npm-run-all clean lint tsc",
+    "dev:start": "npm-run-all build start",
+    "dev": "nodemon --watch src -e ts,ejs --exec npm run dev:start",
+    "start": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "csv": "^6.2.1",
+    "express": "^4.18.2",
+    "sequelize": "^6.25.0",
+    "sqlite3": "^5.1.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.14",
+    "@types/fs-extra": "^9.0.13",
+    "@types/node": "^18.8.4",
+    "@types/shelljs": "^0.8.11",
+    "fs-extra": "^10.1.0",
+    "nodemon": "^2.0.20",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^3.0.2",
+    "shelljs": "^0.8.5",
+    "ts-node": "^10.9.1",
+    "tslint": "^6.1.3",
+    "typescript": "^4.8.4"
+  }
+}
