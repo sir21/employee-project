@@ -1,10 +1,8 @@
 import * as express from "express";
-import { Sequelize } from "sequelize";
+import { UploadEmployeesFromCSV } from "../controller/employeeController";
 
-export const register = (app: express.Application, db: Sequelize) => {
+export const register = (app: express.Application) => {
 
     // define a route handler for the default home page
-    app.post("/users/upload", (req: any, res) => {
-        res.send("OK");
-    });
+    app.post("/employees/upload", UploadEmployeesFromCSV);
 };

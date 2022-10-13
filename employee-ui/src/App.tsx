@@ -1,12 +1,13 @@
 import { FC } from 'react';
-import { Button } from 'antd';
+
 import './App.less';
+import LayoutComponent from './components/LayoutComponent';
 
 const App: FC = () => {
   return (
-    <div className="App">
-      <Button type="primary">Button</Button>
-    </div>
+    <>
+      <LayoutComponent />
+    </>
   );
 }
 

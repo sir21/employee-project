@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { db } from "./config/database.config";
 import * as routes from "./routes";
 
@@ -10,10 +11,11 @@ db.sync({ force: true }).then(() => {
 const app = express();
 const port = 8080; // default port to listen
 
+app.use(cors());
 app.use(express.json());
 
 // Configure routes
-routes.register(app, db);
+routes.register(app);
 
 // start the Express server
 app.listen(port, () => {
