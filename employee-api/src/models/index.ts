@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 // @ts-ignore
-import db from "src/config/database.config";
+import db from "../config/database.config";
 
 interface EmployeeAttribute {
     id: string,
@@ -27,7 +27,7 @@ EmployeeInstance.init(
             allowNull: false,
         },
         salary: {
-            type: DataTypes.STRING,
+            type: DataTypes.DECIMAL,
             allowNull: false,
         }
     },

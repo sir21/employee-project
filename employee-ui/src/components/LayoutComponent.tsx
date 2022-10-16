@@ -2,6 +2,7 @@ import { FC, useState } from "react";
 import { Layout } from 'antd';
 import SideComponent from "./SideComponent";
 import UploadComponent from "./UploadComponent";
+import EmployeeList from "./EmployeeList";
 
 const { Header, Footer, Sider, Content } = Layout;
 
@@ -22,7 +23,7 @@ const LayoutComponent: FC = () => {
           Employee Feedback
         </Header>
         <Content>
-          {page === 'upload' ? <UploadComponent /> : <div>List</div>}
+          {page === 'upload' ? <UploadComponent /> : <EmployeeList />}
         </Content>
         <Footer>Footer</Footer>
       </Layout>

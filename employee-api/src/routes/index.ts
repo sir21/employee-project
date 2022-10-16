@@ -1,8 +1,18 @@
 import * as express from "express";
-import { UploadEmployeesFromCSV } from "../controller/employeeController";
 
-export const register = (app: express.Application) => {
+import {
+    GetAllEmployees,
+    UploadEmployeesFromCSV
+} from "../controller/employeeController";
 
-    // define a route handler for the default home page
-    app.post("/employees/upload", UploadEmployeesFromCSV);
-};
+const router = express.Router();
+
+
+// define a route handler for the default home page
+router.post("/employees/upload", UploadEmployeesFromCSV);
+router.get("/employees", GetAllEmployees);
+// TODO: 3rd story point
+// router.put("/employees/:id", editEmployee);
+// router.delete("employees/:id", deleteEmployee);
+
+export default router;

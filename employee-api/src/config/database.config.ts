@@ -1,7 +1,9 @@
 import { Sequelize } from 'sequelize';
 
-export const db = new Sequelize('app', '', '', {
+const db = new Sequelize('app', '', '', {
     storage: './database.sqlite',
     dialect: 'sqlite',
     logging: false,
 });
+
+export default db;
