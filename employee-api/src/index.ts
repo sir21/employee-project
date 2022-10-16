@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import helmet from 'helmet';
-import bodyParser from 'body-parser';
 import multer from 'multer';
 import db from "./config/database.config";
 import router from "./routes";
@@ -17,8 +16,8 @@ const port = 8080; // default port to listen
 
 app.use(cors());
 app.use(helmet());
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(multer().any());
 
 // Configure routes

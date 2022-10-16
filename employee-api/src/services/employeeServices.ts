@@ -3,10 +3,52 @@ import { EmployeeInstance } from "../models";
 
 import { IFileStatus } from "../@types/fileStatus";
 import { checkEmpty, startWithHash } from "../utils/checks";
-import { Op, Sequelize } from "sequelize";
+import { Op } from "sequelize";
+import db from "../config/database.config";
 
-const addEmployee = () => {
-  return 1;
+const editEmployee = async (id: string, login: string, name: string, salary: number) => {
+  try {
+    const employee = await EmployeeInstance.findByPk(id);
+    if (!employee) {
+      throw new Error("Employee not found");
+    }
+
+    const checkLogin = await EmployeeInstance.findOne({ where: { login: { [Op.like]: login } } });
+
+    if (checkLogin) {
+      throw new Error("Similar login available");
+    }
+
+    // tslint:disable-next-line:no-console
+    console.log("Update", login, name, salary);
+    await employee.update({ login, name, salary });
+    await employee.save();
+
+    return { message: "Success" };
+
+  } catch (err) {
+    // tslint:disable-next-line:no-console
+    console.log(err);
+    throw new Error("Failed updating employee");
+  }
+}
+
+const deleteEmployee = async (id: string) => {
+  try {
+    const employee = await EmployeeInstance.findByPk(id);
+    if (!employee) {
+      throw new Error("Employee not found");
+    }
+
+    await employee.destroy();
+
+    return { message: "Success" };
+
+  } catch (err) {
+    // tslint:disable-next-line:no-console
+    console.log(err);
+    throw new Error("Failed deleting employee");
+  }
 }
 
 const getAllEmployees = async (
@@ -18,20 +60,20 @@ const getAllEmployees = async (
   orderMethod: string = 'ASC'
 ): Promise<{ result: any[], count: number }> => {
   try {
-    // tslint:disable-next-line:no-console
-    console.log(page, pageSize, minSalary, maxSalary, orderBy, orderMethod);
     let res;
 
-    if (minSalary !== 0  && maxSalary !== 0) {
+    const offset = (page - 1) * pageSize;
+
+    if (minSalary !== 0 && maxSalary !== 0) {
       res = await EmployeeInstance.findAndCountAll({
         where: {
           salary: {
             [Op.between]: [minSalary, maxSalary]
           }
         },
-        offset: page * pageSize,
+        offset,
         limit: pageSize,
-        order: [['id', 'ASC']],
+        order: [[orderBy, orderMethod]],
       });
     } else if (minSalary !== 0) {
       res = await EmployeeInstance.findAndCountAll({
@@ -40,9 +82,9 @@ const getAllEmployees = async (
             [Op.gte]: minSalary
           }
         },
-        offset: page * pageSize,
+        offset,
         limit: pageSize,
-        order: [['id', 'ASC']],
+        order: [[orderBy, orderMethod]],
       });
     } else if (maxSalary !== 0) {
       res = await EmployeeInstance.findAndCountAll({
@@ -51,20 +93,17 @@ const getAllEmployees = async (
             [Op.lte]: maxSalary
           }
         },
-        offset: page * pageSize,
+        offset,
         limit: pageSize,
-        order: [['id', 'ASC']],
+        order: [[orderBy, orderMethod]],
       });
     } else {
       res = await EmployeeInstance.findAndCountAll({
-        offset: page * pageSize,
+        offset,
         limit: pageSize,
-        order: [['id', 'ASC']],
+        order: [[orderBy, orderMethod]],
       })
     }
-
-    // tslint:disable-next-line:no-console
-    console.log(res);
     const { rows, count } = res;
     const result = rows.map((row) => {
       return {
@@ -76,29 +115,31 @@ const getAllEmployees = async (
     });
     return { result, count }
   } catch (err) {
-    // tslint:disable-next-line:no-console
-    console.log(err);
     throw new Error("Failed getting employees");
   }
 }
 
 const manageCSVFile = async (files: Express.Multer.File[]): Promise<IFileStatus[]> => {
   try {
-    const promises: Promise<IFileStatus>[] = [];
-    files.forEach(async (file) => {
-      promises.push(uploadEmployees(file));
-    });
-    const result: IFileStatus[] = await Promise.all(promises);
-    return result;
+    const results: IFileStatus[] = []
+    let i = 0;
+    while (i < files.length) {
+      const res = await uploadEmployees(files[i]);
+      results.push(res);
+      i++;
+    }
+
+    return results;
   } catch (err) {
     throw new Error("Failed while uploading CSV.");
   }
 }
 
 const uploadEmployees = async (file: Express.Multer.File): Promise<IFileStatus> => {
-  let fileStatus: IFileStatus = { name: file.originalname, status: 'in_progress', count: 0 };
+  let fileStatus: IFileStatus = { name: file.originalname, status: 'in_progress' };
+  const t = await db.transaction();
   try {
-    const employees: any[] = [];
+    let employees: any[] = [];
     const csvRecords = await csv({ noheader: true }).fromString(file.buffer.toString());
 
     for (const record of csvRecords) {
@@ -110,45 +151,49 @@ const uploadEmployees = async (file: Express.Multer.File): Promise<IFileStatus> 
         fileStatus = {
           ...fileStatus,
           status: 'error',
-          count: 0,
         }
+        t.rollback();
+        employees = [];
         break;
       }
 
-      const employee = await EmployeeInstance.findByPk(record.field1);
+      const employee = await EmployeeInstance.findByPk(record.field1, { transaction: t });
       if (employee) {
         fileStatus = {
           ...fileStatus,
           status: 'error',
-          count: 0,
         }
+        await t.rollback();
+        employees = [];
         break;
       }
-      fileStatus = {
-        ...fileStatus,
-        count: fileStatus.count++,
-      }
-      const emp = await EmployeeInstance.create({ id: record.field1, login: record.field2, name: record.field3, salary: record.field4 })
+      const emp = await EmployeeInstance.create({ id: record.field1, login: record.field2, name: record.field3, salary: record.field4 }, { transaction: t })
       employees.push(emp);
     }
 
-    fileStatus = {
-      ...fileStatus,
-      status: 'completed'
-    };
+    if (employees.length > 0) {
+      await t.commit();
+      fileStatus = {
+        ...fileStatus,
+        status: 'completed'
+      };
+    }
     return fileStatus;
   } catch (err) {
+    // tslint:disable-next-line:no-console
+    console.log(err);
+    await t.rollback();
     fileStatus = {
       ...fileStatus,
-      status: 'error',
-      count: 0,
+      status: 'error'
     };
     return fileStatus;
   }
 }
 
 export {
-  addEmployee,
+  editEmployee,
+  deleteEmployee,
   getAllEmployees,
   manageCSVFile
 }

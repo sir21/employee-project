@@ -26,12 +26,12 @@ make sure you have installed all the node_modules using `npm i` command
 
 ### employee-api
 
--- `cd employee-api`
+-- execute `cd employee-api`
 
--- `npm test`
+-- execute `npm test`
 
 ### employee-ui
 
--- `cd employee-ui`
+-- execute `cd employee-ui`
 
--- `npm test`
+-- execute `npm test`

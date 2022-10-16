@@ -3,16 +3,17 @@ const startWithHash = (value: string): boolean => {
 }
 
 const checkEmpty = (values: string[]): boolean => {
+    let count = 0
     values.forEach(value => {
+        value = value.trim();
         if (value == null) {
-            return true;
+            count++;
         }
-        if (value.toString() === '') {
-            return true;
+        if (value === '') {
+            count++;
         }
     });
-
-    return false;
+    return count !== 0;;
 }
 
 export {

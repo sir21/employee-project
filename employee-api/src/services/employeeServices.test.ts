@@ -1,4 +1,4 @@
-import { addEmployee } from "./employeeServices";
+
 
 describe('Employee Service', () => {
     it('Should add employee to database', () => {

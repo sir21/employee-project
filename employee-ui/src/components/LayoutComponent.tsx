@@ -14,7 +14,7 @@ const LayoutComponent: FC = () => {
   }
 
   return (
-    <Layout style={{ height: '100vh' }}>
+    <Layout style={{ height: 'auto', minHeight: '100vh' }}>
       <Sider>
         <SideComponent page={page} pageSelect={handlePageChange} />
       </Sider>

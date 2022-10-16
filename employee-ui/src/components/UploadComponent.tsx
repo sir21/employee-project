@@ -21,14 +21,14 @@ const UploadComponent: FC = (props) => {
       files.forEach((file) => {
         formData.append("files", file, file.name);
       })
-      const uploadResponse = await uploadCSV(formData);
+      uploadCSV(formData).then((res) => {
+        setList(res.data);
+        setFiles([]);
+        setLoading(false);
+      }).catch((err) => {
+        setLoading(false);
+      })
 
-      // Clear file list after upload;
-      setFiles([]);
-
-
-      // Add and display list
-      setLoading(false);
     } catch (err) {
       message.error("File list upload failed");
     }
@@ -65,6 +65,20 @@ const UploadComponent: FC = (props) => {
           <Button type="primary" onClick={handleUpload}>
             Process
           </Button>
+        </Col>
+      </Row>
+      <Row hidden={list.length === 0}>
+        <Col span={12} offset={6}>
+          {list.map(item => {
+            return (
+              <>
+                <Row style={{paddingTop: '10px'}}>
+                  <Col span={12} offset={8}>
+                    <Button danger={item.status === 'error'}>{item.name}</Button>
+                  </Col>
+                </Row>
+              </>)
+          })}
         </Col>
       </Row>
       <Row style={{ paddingTop: '10px' }}>

@@ -1,6 +1,44 @@
 import { Request, Response } from "express";
+import { checkEmpty } from "../utils/checks";
 
-import { getAllEmployees, manageCSVFile } from "../services/employeeServices";
+import { deleteEmployee, editEmployee, getAllEmployees, manageCSVFile } from "../services/employeeServices";
+
+const EditEmployee = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { login, name, salary } = req.body;
+
+        // tslint:disable-next-line:no-console
+        console.log("Update1", login, name, salary);
+
+        if (checkEmpty([id, login, name, salary])) {
+            return res.status(500).send({ message: "Empty Fields" });
+        }
+
+        const result = await editEmployee(id, login, name, salary);
+
+        return res.status(204).send(result);
+    } catch (err) {
+        return res.status(500).send(err.message);
+    }
+};
+
+const DeleteEmployee = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        if (checkEmpty([id])) {
+            return res.status(500).send({ message: "Id required" });
+        }
+
+        const result = await deleteEmployee(id);
+
+        return res.status(204).send(result);
+    } catch (err) {
+        return res.status(500).send(err.message);
+    }
+};
+
 
 const GetAllEmployees = async (req: Request, res: Response) => {
     try {
@@ -19,15 +57,9 @@ const GetAllEmployees = async (req: Request, res: Response) => {
             orderBy.toString(),
             orderMethod
         );
-
-        // tslint:disable-next-line:no-console
-        console.log(result);
-
-        return res.send(result).status(200);
+        return res.status(200).send(result);
     } catch (err) {
-        // tslint:disable-next-line:no-console
-        console.log(err);
-        return res.send(err).status(500);
+        return res.status(500).send(err.message);
     }
 }
 
@@ -38,13 +70,17 @@ const UploadEmployeesFromCSV = async (req: Request, res: Response) => {
             return;
         }
         const result = await manageCSVFile(files);
-        return res.send(result).status(201);
+        return res.status(201).send(result);
     } catch (err) {
-        return res.send(err).status(500);
+        // tslint:disable-next-line:no-console
+        console.log(err);
+        return res.status(500).send(err.message);
     }
 }
 
 export {
+    EditEmployee,
+    DeleteEmployee,
     GetAllEmployees,
     UploadEmployeesFromCSV
 }
