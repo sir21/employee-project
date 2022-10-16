@@ -27,8 +27,8 @@ const EmployeeList: FC = () => {
     const [employees, setEmployees] = useState<IEmployee[]>([])
     const [page, setPage] = useState<number>(0);
     const [pageSize, setPageSize] = useState<number>(5);
-    const [minSalary, setMinSalary] = useState<number>(-Infinity);
-    const [maxSalary, setMaxSalary] = useState<number>(Infinity);
+    const [minSalary, setMinSalary] = useState<number | null>(null);
+    const [maxSalary, setMaxSalary] = useState<number | null>(null);
     const [orderBy, setOrderBy] = useState<string>('id');
     const [orderMethod, setOrderMethod] = useState<string>('ASC');
     const [loading, setLoading] = useState<boolean>(false);
@@ -49,16 +49,17 @@ const EmployeeList: FC = () => {
     const fetchEmployees = () => {
         getAllEmployees(page, pageSize, minSalary, maxSalary, orderBy, orderMethod)
             .then((result) => {
-                if (!Array.isArray(result.data)) {
+                console.log(result);
+                if (!Array.isArray(result.data.result)) {
                     return;
                 }
-                let employeesData = result.data.map(d => {
+                const employeesData = result.data.result.map(d => {
                     return {
                         ...d,
                         key: d.id
                     }
                 })
-                setTotal(employeesData.length);
+                setTotal(result.data.count);
                 setEmployees(employeesData);
             }).catch((err) => {
                 message.error(err);

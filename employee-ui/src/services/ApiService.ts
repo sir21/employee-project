@@ -10,8 +10,8 @@ const editEmployee = (employee: IEmployee) => {
     return http.put<IEmployee>(`/${employee.id}`, employee);
 }
 
-const getAllEmployees = (page: number, pageSize: number, minSalary: number, maxSalary: number, orderBy: string, orderMethod: string) => {
-    return http.get<IEmployee[]>("/", { params: { page, pageSize, minSalary, maxSalary, orderBy, orderMethod } });
+const getAllEmployees = (page: number, pageSize: number, minSalary: number|null, maxSalary: number|null, orderBy: string, orderMethod: string) => {
+    return http.get<{result: IEmployee[], count: number}>("/", { params: { page, pageSize, minSalary, maxSalary, orderBy, orderMethod } });
 }
 
 const uploadCSV = (data: FormData) => {
