@@ -1,5 +1,5 @@
 import { Button, Col, message, Row, Typography, Upload, UploadProps } from "antd";
-import { FC, useState } from "react";
+import React, { FC, useState } from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import { uploadCSV } from "../services/ApiService";
 import { RcFile } from "antd/lib/upload";
@@ -16,6 +16,7 @@ const UploadComponent: FC = () => {
     try {
       if (files.length === 0) {
         message.error("No files");
+        return;
       }
       setLoading(true);
       const formData = new FormData();
@@ -26,12 +27,13 @@ const UploadComponent: FC = () => {
         setList(res.data);
         setFiles([]);
         setLoading(false);
-      }).catch((err) => {
+      }).catch(() => {
+        message.error("File list upload failed");
         setLoading(false);
-      })
-
+      });
     } catch (err) {
       message.error("File list upload failed");
+      setLoading(false);
     }
   };
 
@@ -43,6 +45,7 @@ const UploadComponent: FC = () => {
         message.error(`${file.name} is not a csv file`);
         return Upload.LIST_IGNORE
       }
+      setList([]);
       setFiles([...files, file]);
       message.success(`${file.name} added to the file list`);
       return false;
@@ -68,7 +71,7 @@ const UploadComponent: FC = () => {
       <Row>
         <Col span={6}></Col>
         <Col span={12} style={{ textAlign: 'center' }}>
-          <Button type="primary" onClick={handleUpload}>
+          <Button type="primary" onClick={handleUpload} loading={loading}>
             Process
           </Button>
         </Col>
@@ -79,8 +82,10 @@ const UploadComponent: FC = () => {
             return (
               <>
                 <Row style={{ paddingTop: '10px' }}>
-                  <Col span={12} offset={8}>
-                    <Button danger={item.status === 'error'}>{item.name}</Button>
+                  <Col flex="auto">
+                    <Button danger={item.status === 'error'} block size="large" style={{width: '100%'}}>
+                      <p>{item.name}</p>
+                    </Button>
                   </Col>
                 </Row>
               </>)

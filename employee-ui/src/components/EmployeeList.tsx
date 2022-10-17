@@ -2,23 +2,20 @@ import {
   Button,
   Col,
   Form,
-  Input,
   InputNumber,
   message,
-  Modal,
   Pagination,
   Row,
-  Space,
-  Table,
   Typography
 } from "antd";
-import { FC, useEffect, useState } from "react";
-import { DeleteOutlined, EditOutlined, VerticalAlignMiddleOutlined } from "@ant-design/icons";
+import React, { FC, useEffect, useState } from "react";
 
 import { IEmployee } from "../@types/employee"
 import { getAllEmployees, editEmployee, deleteEmployee } from "../services/ApiService";
+import DeleteModal from "../modals/DeleteModal";
+import EditModal from "../modals/EditModal";
+import EmployeeTable from "./EmployeeTable";
 
-const { Column } = Table;
 const { Title } = Typography;
 
 const EmployeeList: FC = () => {
@@ -43,7 +40,7 @@ const EmployeeList: FC = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, [page, pageSize])
+  }, [page, pageSize, orderBy, orderMethod])
 
   const fetchEmployees = () => {
     getAllEmployees(page, pageSize, minSalary, maxSalary, orderBy, orderMethod)
@@ -68,7 +65,6 @@ const EmployeeList: FC = () => {
     setOrderMethod(order === orderBy ? orderMethod === 'ASC' ? 'DESC' : 'ASC' : 'ASC');
     setOrderBy(order);
     setPage(0);
-    fetchEmployees();
   }
 
   const handlePageSizeChange = (current: number, size: number) => {
@@ -98,7 +94,10 @@ const EmployeeList: FC = () => {
         setShowEditModal(false);
         setSelectedRecord(undefined);
         fetchEmployees();
-      });
+      }).catch(() => {
+        message.error("Update of record failed");
+        setLoading(false);
+      })
     } catch (err) {
       message.error("Update of record failed");
       setLoading(false);
@@ -141,6 +140,9 @@ const EmployeeList: FC = () => {
         setSelectedRecord(undefined);
         setPage(0);
         fetchEmployees();
+      }).catch(() => {
+        message.error("Delete of record failed");
+        setLoading(false);
       });
     } catch (err) {
       message.error("Delete of record failed");
@@ -196,48 +198,13 @@ const EmployeeList: FC = () => {
         </Row>
       </Form>
 
-      <Row>
-        <Col span={20} offset={2}>
-          <Table
-            dataSource={employees}
-            pagination={false}>
-            <Column title={
-              <Row>
-                <Col style={{ paddingRight: '5px' }}>Id</Col>
-                <Col><Button icon={<VerticalAlignMiddleOutlined />} shape="circle" size="small" onClick={() => handleSort('id')} /></Col>
-              </Row>
-            } dataIndex="id" key="id" />
-            <Column title={
-              <Row>
-                <Col style={{ paddingRight: '5px' }}>Login</Col>
-                <Col><Button icon={<VerticalAlignMiddleOutlined />} shape="circle" size="small" onClick={() => handleSort('login')} /></Col>
-              </Row>
-            } dataIndex="login" key="login" />
-            <Column title={
-              <Row>
-                <Col style={{ paddingRight: '5px' }}>Name</Col>
-                <Col><Button icon={<VerticalAlignMiddleOutlined />} shape="circle" size="small" onClick={() => handleSort('name')} /></Col>
-              </Row>
-            } dataIndex="name" key="name" />
-            <Column title={
-              <Row>
-                <Col style={{ paddingRight: '5px' }}>Salary</Col>
-                <Col><Button icon={<VerticalAlignMiddleOutlined />} shape="circle" size="small" onClick={() => handleSort('salary')} /></Col>
-              </Row>
-            } dataIndex="salary" key="salary" />
-            <Column
-              title="Actions"
-              key="action"
-              render={(_: any, record: IEmployee) => (
-                <Space size="middle">
-                  <Button type="text" icon={<EditOutlined />} onClick={() => handleEditClick(record)} />
-                  <Button type="text" icon={<DeleteOutlined />} onClick={() => handleDeleteClick(record)} danger />
-                </Space>
-              )}
-            />
-          </Table>
-        </Col>
-      </Row>
+      <EmployeeTable
+        employees={employees}
+        handleSort={handleSort}
+        handleEditClick={handleEditClick}
+        handleDeleteClick={handleDeleteClick}
+      />
+
       <Row justify="end">
         <Col span={12} >
           <Pagination
@@ -250,57 +217,23 @@ const EmployeeList: FC = () => {
             showSizeChanger={true} />
         </Col>
       </Row>
-      <Modal
-        title="Edit"
-        open={showEditModal}
-        onOk={handleEditOk}
-        onCancel={handleEditCancel}
-        footer={[
-          <Button key="back" onClick={handleEditCancel}>
-            Cancel
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleEditOk} loading={loading}>
-            Update
-          </Button>
-        ]}>
-        <Form
-          form={form}
-          labelCol={{ span: 4 }}
-          wrapperCol={{ span: 14 }}
-          layout="horizontal"
-          initialValues={selectedRecord}
-          onValuesChange={handleEditUpdate}
-          size={'small'}
-        >
-          <Form.Item label="Id" name="id">
-            <Input disabled />
-          </Form.Item>
-          <Form.Item label="Login" name="login">
-            <Input />
-          </Form.Item>
-          <Form.Item label="Name" name="name">
-            <Input />
-          </Form.Item>
-          <Form.Item label="Salary" name="salary">
-            <InputNumber />
-          </Form.Item>
-        </Form>
-      </Modal>
-      <Modal
-        title="Title"
-        open={showDeleteModal}
-        onOk={handleDeleteOk}
-        onCancel={handleDeleteCancel}
-        footer={[
-          <Button key="back" onClick={handleDeleteCancel}>
-            Cancel
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleDeleteOk} loading={loading}>
-            Confirm
-          </Button>
-        ]}>
-        <p>Are you sure you want to delete employee {selectedRecord?.login}?</p>
-      </Modal>
+
+      <EditModal
+        showEditModal={showEditModal}
+        handleEditOk={handleEditOk}
+        handleEditCancel={handleEditCancel}
+        handleEditUpdate={handleEditUpdate}
+        loading={loading}
+        selectedRecord={selectedRecord}
+        form={form}
+      />
+      <DeleteModal
+        showDeleteModal={showDeleteModal}
+        handleDeleteCancel={handleDeleteCancel}
+        handleDeleteOk={handleDeleteOk}
+        loading={loading}
+        selectedRecord={selectedRecord}
+      />
     </>
   );
 };

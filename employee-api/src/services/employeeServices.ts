@@ -8,10 +8,10 @@ import db from "../config/database.config";
 
 /**
  * Edit employee
- * @param id 
- * @param login 
- * @param name 
- * @param salary 
+ * @param id
+ * @param login
+ * @param name
+ * @param salary
  * @returns Success message
  */
 const editEmployee = async (id: string, login: string, name: string, salary: number) => {
@@ -23,7 +23,7 @@ const editEmployee = async (id: string, login: string, name: string, salary: num
 
     const checkLogin = await EmployeeInstance.findOne({ where: { login: { [Op.like]: login } } });
 
-    if (checkLogin.getDataValue('id') !== employee.getDataValue('id')) {
+    if (checkLogin && checkLogin.getDataValue('id') !== employee.getDataValue('id')) {
       throw new Error("Similar login available");
     }
     await employee.update({ login, name, salary });
@@ -59,12 +59,12 @@ const deleteEmployee = async (id: string) => {
 
 /**
  * Get all employees from DB. Filters available for min and max salary.
- * @param page 
- * @param pageSize 
- * @param minSalary 
- * @param maxSalary 
- * @param orderBy 
- * @param orderMethod 
+ * @param page
+ * @param pageSize
+ * @param minSalary
+ * @param maxSalary
+ * @param orderBy
+ * @param orderMethod
  * @returns List of employees Promise<{result, count}>
  */
 const getAllEmployees = async (
@@ -222,7 +222,7 @@ const uploadEmployees = async (file: Express.Multer.File): Promise<IFileStatus> 
                 // If that record blocked by new record, blocked will get updated. (Highly unlikely scenario)
                 qRc = { ...qRc, blockedId: loginMatchEmployeeSub.getDataValue('id') }
               } else {
-                // If login is free, 
+                // If login is free,
                 const employeeNew = await EmployeeInstance.findByPk(qRc.record.field1);
                 if (employeeNew) {
                   // If blocked record already has employee

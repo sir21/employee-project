@@ -8,7 +8,7 @@ const EditEmployee = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { login, name, salary } = req.body;
 
-        if (checkEmpty([id, login, name, salary])) {
+        if (checkEmpty([id, login, name]) || isNaN(salary)) {
             return res.status(500).send({ message: "Empty Fields" });
         }
 
@@ -69,8 +69,6 @@ const UploadEmployeesFromCSV = async (req: Request, res: Response) => {
         const result = await manageCSVFile(files);
         return res.status(201).send(result);
     } catch (err) {
-        // tslint:disable-next-line:no-console
-        console.log(err);
         return res.status(500).send(err.message);
     }
 }

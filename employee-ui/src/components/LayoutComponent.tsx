@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import React, { FC, useState } from "react";
 import { Layout } from 'antd';
 import SideComponent from "./SideComponent";
 import UploadComponent from "./UploadComponent";

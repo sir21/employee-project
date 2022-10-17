@@ -19,4 +19,12 @@ describe("Upload tests", () => {
     it("should display error if no files are in array", () => {
 
     });
+
+    it("should display file status list after successful upload", () => {
+
+    });
+
+    it ("should not be able to upload files except for .csv", () => {
+
+    });
 });
