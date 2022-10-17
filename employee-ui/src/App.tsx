@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import React, { FC } from 'react';
 
 import './App.less';
 import LayoutComponent from './components/LayoutComponent';
@@ -6,7 +6,7 @@ import LayoutComponent from './components/LayoutComponent';
 const App: FC = () => {
   return (
     <>
-      <LayoutComponent />
+      <LayoutComponent data-test-id="layout"/>
     </>
   );
 }
