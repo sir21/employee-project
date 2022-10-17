@@ -8,9 +8,6 @@ const EditEmployee = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { login, name, salary } = req.body;
 
-        // tslint:disable-next-line:no-console
-        console.log("Update1", login, name, salary);
-
         if (checkEmpty([id, login, name, salary])) {
             return res.status(500).send({ message: "Empty Fields" });
         }

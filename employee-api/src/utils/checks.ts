@@ -5,10 +5,10 @@ const startWithHash = (value: string): boolean => {
 const checkEmpty = (values: string[]): boolean => {
     let count = 0
     values.forEach(value => {
-        value = value.trim();
         if (value == null) {
             count++;
         }
+        value = value ? value.trim() : value;
         if (value === '') {
             count++;
         }

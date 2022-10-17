@@ -15,20 +15,15 @@ const editEmployee = async (id: string, login: string, name: string, salary: num
 
     const checkLogin = await EmployeeInstance.findOne({ where: { login: { [Op.like]: login } } });
 
-    if (checkLogin) {
+    if (checkLogin.getDataValue('id') !== employee.getDataValue('id')) {
       throw new Error("Similar login available");
     }
-
-    // tslint:disable-next-line:no-console
-    console.log("Update", login, name, salary);
     await employee.update({ login, name, salary });
     await employee.save();
 
     return { message: "Success" };
 
   } catch (err) {
-    // tslint:disable-next-line:no-console
-    console.log(err);
     throw new Error("Failed updating employee");
   }
 }
@@ -45,8 +40,6 @@ const deleteEmployee = async (id: string) => {
     return { message: "Success" };
 
   } catch (err) {
-    // tslint:disable-next-line:no-console
-    console.log(err);
     throw new Error("Failed deleting employee");
   }
 }
@@ -180,8 +173,6 @@ const uploadEmployees = async (file: Express.Multer.File): Promise<IFileStatus> 
     }
     return fileStatus;
   } catch (err) {
-    // tslint:disable-next-line:no-console
-    console.log(err);
     await t.rollback();
     fileStatus = {
       ...fileStatus,
