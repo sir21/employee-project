@@ -6,6 +6,14 @@ import { checkEmpty, startWithHash } from "../utils/checks";
 import { Op } from "sequelize";
 import db from "../config/database.config";
 
+/**
+ * Edit employee
+ * @param id 
+ * @param login 
+ * @param name 
+ * @param salary 
+ * @returns Success message
+ */
 const editEmployee = async (id: string, login: string, name: string, salary: number) => {
   try {
     const employee = await EmployeeInstance.findByPk(id);
@@ -28,6 +36,11 @@ const editEmployee = async (id: string, login: string, name: string, salary: num
   }
 }
 
+/**
+ * Delete employee
+ * @param id Employee id to delete
+ * @returns Success message
+ */
 const deleteEmployee = async (id: string) => {
   try {
     const employee = await EmployeeInstance.findByPk(id);
@@ -44,6 +57,16 @@ const deleteEmployee = async (id: string) => {
   }
 }
 
+/**
+ * Get all employees from DB. Filters available for min and max salary.
+ * @param page 
+ * @param pageSize 
+ * @param minSalary 
+ * @param maxSalary 
+ * @param orderBy 
+ * @param orderMethod 
+ * @returns List of employees Promise<{result, count}>
+ */
 const getAllEmployees = async (
   page: number = 0,
   pageSize: number = 5,
@@ -112,6 +135,11 @@ const getAllEmployees = async (
   }
 }
 
+/**
+ * Managing CSV files to get employees
+ * @param files CSV files
+ * @returns Status of uploading for each file sent
+ */
 const manageCSVFile = async (files: Express.Multer.File[]): Promise<IFileStatus[]> => {
   try {
     const results: IFileStatus[] = []
@@ -128,48 +156,114 @@ const manageCSVFile = async (files: Express.Multer.File[]): Promise<IFileStatus[
   }
 }
 
+/**
+ * Process CSV file
+ * @param file CSV file to process
+ * @returns CSV file process status
+ */
 const uploadEmployees = async (file: Express.Multer.File): Promise<IFileStatus> => {
+  // Initialize CSV file process status and transaction
   let fileStatus: IFileStatus = { name: file.originalname, status: 'in_progress' };
   const t = await db.transaction();
-  try {
-    let employees: any[] = [];
-    const csvRecords = await csv({ noheader: true }).fromString(file.buffer.toString());
 
+  try {
+    // Encoding csv file to readable format
+    const csvRecords = await csv({ noheader: true }).fromString(file.buffer.toString());
+    // Array to store blocked employees
+    let queueRecords: { record: any, blockedId: string }[] = [];
+
+    // Iterate CSV file records
     for (const record of csvRecords) {
+      // Ignore the record if record start with #
       if (startWithHash(record.field1)) {
         continue;
       }
 
+      // IF any record has null value, will stop file process
       if (checkEmpty([record.field1, record.field2, record.field3, record.field4])) {
-        fileStatus = {
-          ...fileStatus,
-          status: 'error',
-        }
-        t.rollback();
-        employees = [];
+        fileStatus = { ...fileStatus, status: 'error' };
+        queueRecords = [];
         break;
       }
 
+      // Check available employee with id and login
       const employee = await EmployeeInstance.findByPk(record.field1, { transaction: t });
+      const loginMatchEmployee = await EmployeeInstance.findOne({ where: { login: { [Op.like]: record.field2 } }, transaction: t });
+
       if (employee) {
-        fileStatus = {
-          ...fileStatus,
-          status: 'error',
+        if (loginMatchEmployee) {
+          if (loginMatchEmployee.getDataValue('id') === employee.getDataValue('id')) {
+            // Updating existing employee name and salary
+            await employee.update({ name: record.field3, salary: record.field4 }, { transaction: t });
+          } else {
+            // When login equals but different employee, This blocks DB update for this record
+            let qRc = queueRecords.find(f => f.record.field1 === employee.getDataValue('id'));
+            if (qRc) {
+              qRc = { ...qRc, record, blockedId: loginMatchEmployee.getDataValue('id') }
+            } else {
+              queueRecords.push({ record, blockedId: loginMatchEmployee.getDataValue('id') });
+            }
+          }
+        } else {
+          // Updating existing employee with different login, name and salary. Login is unique and not found on DB
+          await employee.update({ login: record.field2, name: record.field3, salary: record.field4 }, { transaction: t });
+
+          // Remove any blocked records related to this record
+          queueRecords = queueRecords.filter(q => q.record.field1 !== employee.getDataValue('id'));
+
+          // Check blocked records and see this will last employee update free up any logins'
+          const qRcs = queueRecords.filter(f => f.blockedId === employee.getDataValue('id'));
+          if (qRcs.length > 0) {
+            for (let qRc of qRcs) {
+              // check for blocked login
+              const loginMatchEmployeeSub = await EmployeeInstance.findOne(
+                { where: { login: { [Op.like]: qRc.record.field2 } }, transaction: t });
+              if (loginMatchEmployeeSub) {
+                // If that record blocked by new record, blocked will get updated. (Highly unlikely scenario)
+                qRc = { ...qRc, blockedId: loginMatchEmployeeSub.getDataValue('id') }
+              } else {
+                // If login is free, 
+                const employeeNew = await EmployeeInstance.findByPk(qRc.record.field1);
+                if (employeeNew) {
+                  // If blocked record already has employee
+                  await employeeNew.update(
+                    { login: qRc.record.field2, name: qRc.record.field3, salary: qRc.record.field4 },
+                    { transaction: t });
+                } else {
+                  // If blocked record does not have employee created in DB
+                  await EmployeeInstance.create(
+                    { id: qRc.record.field1, login: qRc.record.field2, name: qRc.record.field3, salary: qRc.record.field4 },
+                    { transaction: t })
+                }
+                // Remove updated blocked record from DB
+                queueRecords = queueRecords.filter(f => f.record.field1 !== qRc.record.field1);
+              }
+            }
+          }
         }
-        await t.rollback();
-        employees = [];
-        break;
+      } else {
+        if (loginMatchEmployee) {
+          // New employee with blocked login
+          let qRc = queueRecords.find(f => f.record.field1 === employee.getDataValue('id'));
+          if (qRc) {
+            qRc = { ...qRc, record, blockedId: loginMatchEmployee.getDataValue('id') }
+          } else {
+            queueRecords.push({ record, blockedId: loginMatchEmployee.getDataValue('id') });
+          }
+        } else {
+          // New employee with unique login
+          await EmployeeInstance.create({ id: record.field1, login: record.field2, name: record.field3, salary: record.field4 }, { transaction: t })
+        }
       }
-      const emp = await EmployeeInstance.create({ id: record.field1, login: record.field2, name: record.field3, salary: record.field4 }, { transaction: t })
-      employees.push(emp);
     }
 
-    if (employees.length > 0) {
+    // Check everything went well, if so will commit data to database, otherwise will rollback the transaction
+    if (queueRecords.length === 0 && fileStatus.status === 'in_progress') {
       await t.commit();
-      fileStatus = {
-        ...fileStatus,
-        status: 'completed'
-      };
+      fileStatus = { ...fileStatus, status: 'completed' };
+    } else {
+      await t.rollback();
+      fileStatus = { ...fileStatus, status: 'error' };
     }
     return fileStatus;
   } catch (err) {

@@ -15,7 +15,10 @@ const LayoutComponent: FC = () => {
 
   return (
     <Layout style={{ height: 'auto', minHeight: '100vh' }}>
-      <Sider>
+      <Sider
+        breakpoint="lg"
+        collapsedWidth="0"
+      >
         <SideComponent page={page} pageSelect={handlePageChange} />
       </Sider>
       <Layout>
@@ -25,7 +28,7 @@ const LayoutComponent: FC = () => {
         <Content>
           {page === 'upload' ? <UploadComponent /> : <EmployeeList />}
         </Content>
-        <Footer>Footer</Footer>
+        <Footer>Developed by Sasitha</Footer>
       </Layout>
     </Layout>
   );

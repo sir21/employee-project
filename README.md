@@ -22,7 +22,9 @@
 
 ## Testing
 
-make sure you have installed all the node_modules using `npm i` command
+Make sure you have installed all the node_modules using `npm i` command.
+Remove `database.sqlite` file before you start executing backend test cases. Need to be
+Removed before each test run as well. (I have not added clearing code or script to this).
 
 ### employee-api
 

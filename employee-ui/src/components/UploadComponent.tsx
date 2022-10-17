@@ -1,12 +1,13 @@
-import { Button, Col, message, Row, Upload, UploadProps } from "antd";
+import { Button, Col, message, Row, Typography, Upload, UploadProps } from "antd";
 import { FC, useState } from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import { uploadCSV } from "../services/ApiService";
 import { RcFile } from "antd/lib/upload";
 
 const { Dragger } = Upload;
+const { Title } = Typography;
 
-const UploadComponent: FC = (props) => {
+const UploadComponent: FC = () => {
   const [files, setFiles] = useState<RcFile[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [list, setList] = useState<any[]>([]);
@@ -60,6 +61,11 @@ const UploadComponent: FC = (props) => {
   return (
     <>
       <Row>
+        <Col span={20} offset={2}>
+          <Title level={3}>Upload Employee CSV</Title>
+        </Col>
+      </Row>
+      <Row>
         <Col span={6}></Col>
         <Col span={12} style={{ textAlign: 'center' }}>
           <Button type="primary" onClick={handleUpload}>
@@ -72,7 +78,7 @@ const UploadComponent: FC = (props) => {
           {list.map(item => {
             return (
               <>
-                <Row style={{paddingTop: '10px'}}>
+                <Row style={{ paddingTop: '10px' }}>
                   <Col span={12} offset={8}>
                     <Button danger={item.status === 'error'}>{item.name}</Button>
                   </Col>
